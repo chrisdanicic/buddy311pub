@@ -16,4 +16,28 @@ A section of the data cleansing process can be viewed [here](https://github.com/
 
 ## The Model
 
-We started by testing a few basic NLP models for text classification. We looked at Naive Bayes classifiers and linear kernel Support Vector Machine classifiers using the Sci-Kit Learn python package. You can view the baseline model performance using the final cleaned data [here](https://github.com/chrisdanicic/buddy311pub/blob/master/nonNN_model_v2.ipynb).
+### scikit-learn
+
+We started by testing a few basic NLP models for text classification. We looked at Naive Bayes classifiers and linear kernel Support Vector Machine classifiers using the [scikit-learn](https://scikit-learn.org/stable/supervised_learning.html#supervised-learning) python package. You can view the baseline model performance using the final cleaned data [here](https://github.com/chrisdanicic/buddy311pub/blob/master/nonNN_model_v2.ipynb).
+
+### FastText
+
+We also looked at Facebook's [FastText](https://fasttext.cc/docs/en/supervised-tutorial.html) classifier. FastText is a continuous bag-of-words (CBOW) model with embedding trained on character n-grams rather than full words. FastText is C++ based and can be used through terminal commands. Text and the respective classifications must formatted in a defined structure where each line of a .txt file is written as ```__label__ text to continue to end of line```. It also supports multi-class tagging in the form of  ```__label_1__ __label_2__ text to continue to end of line```. Though we have a succession of FastText ipynb work, the most up-to-date grid search using FastText and our latest cleaned dataset can be viewed [here](https://github.com/chrisdanicic/buddy311pub/blob/master/FastText_grid.ipynb).
+
+Because FastText is C++ based, it works very fast. For example, a typical Google Collaboratory [session](https://colab.research.google.com/drive/151805XTDg--dgHb3-AXJCpnWaqRhop_2) runs on a single core 2-thread 2.2GHz processor with ~13GB memory. In our grid search no test took more than approximately 10 minutes (including 50 epoch, 4-wordNgram with 200 dimension representation). While FastText performed slightly worse than our Finetune model, its fast training and relatively high accuracy make it attractive as a secondary model for possible ensamble model implementation.
+
+## Finetune
+
+The model we use to classify complaints is based on an open-source pre-trained transformer model called [Finetune](https://finetune.indico.io/), developed by OpenAI and Indico. It is built upon TensorFlow which makes it easy to use with common cloud GPU setups. Background into the model can be found [here](https://s3-us-west-2.amazonaws.com/openai-assets/research-covers/language-unsupervised/language_understanding_paper.pdf).
+
+Finetune is a task-agnostic semi-supervised Natural Language Processing algorithm. Word representations are pre-trained on a large corpus of media of different styles and subjects to obtain a generalized representation of the English language. The pre-trained language model can predict the next word in a sentence. Finetune uses the [“Multi-Layer Transformer Decoder”](https://mc.ai/transformer-architecture-attention-is-all-you-need-2/) model architecture, which is a deep-learning model that utilizes the concept of attention to selectively focus on different parts of the input while training. For this step, Finetune trained their model on the BooksCorpus dataset, which contains seven thousand unique books.
+
+A Transformer network is a type of artificial intelligence neural network that can be trained to take in certain inputs (i.e. text), encode the input, and then decode the given information to a specific output. This output could be the next most probable word in a sentence  or in our case a classification of a complaint.Positional encoding means that word order matters - better "understanding" of keywords and their contextEncoder processes input, outputs directly to decoder Attention mechanism passes on high value information from word to word.
+
+To build the model, we needed to train the unsupervised base model with our text samples and true classifications. We use approximately 750,000 real-world 311-type complaints to fine tune the model for 311 complaint classification. Muliple variables were tested to arrive at the optimum parameters for the model. The full model was trained on 2-GPU IMB [Softlayer](https://www.ibm.com/cloud/products?cm_mc_uid=35732518291815446346230&cm_mc_sid_50200000=97094531544634623079&cm_mc_sid_52640000=12460511544634623104) virtual machines and deployed in the cloud, accessible through our API. Fine Tune required significantly more resources to train FastText, and therefore is better suited for a less frequent re-tuning schedule than the FastText model would be. Though Finetune was the slowest model to train, it acheived the highest accuracy at 89% on MAIN classes and 85% on SUB classes.
+
+## Classifier Model
+
+Once trained, our classification model was served on a [Sanic](https://sanic.readthedocs.io/en/latest/) web server (). Sanic is a Flask-like web server that allows multi-threading and asynchronous requests. A non-production Flask-version of our model server code can be seen [here](https://github.com/chrisdanicic/buddy311pub/blob/master/buddy311.py). You can see our final production level Sanic web server implementation [here](https://github.com/pdurkin84/buddy311/blob/master/Classifier/buddy311.py). 
+
+ 
